@@ -5,3 +5,4 @@ At the moment it returns a preprocessed image that still needs to be injected wi
  A LaMa prerocessor for ComfyUi
  
  You can find the processor in image/processors
+## This code is heavily inspired by the AUTOMATIC1111 webui controlnet extension
