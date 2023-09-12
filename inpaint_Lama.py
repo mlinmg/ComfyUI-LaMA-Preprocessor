@@ -447,6 +447,6 @@ class lamaPreprocessor:
     RETURN_TYPES = ("IMAGE", )
     RETURN_NAMES = ("Latent_LaMa", )
     FUNCTION = "preprocess"
-    CATEGORY = "image/preprocessing"
+    CATEGORY = "image/preprocessors"
 NODE_CLASS_MAPPINGS = {
     "LaMaPreprocessor": lamaPreprocessor,}
