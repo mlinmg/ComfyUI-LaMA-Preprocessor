@@ -521,7 +521,7 @@ class lamaPreprocessor:
         #inserisci rumore nel latente
         #create a mask with the same size of mask but all ones
         mas = rearrange(raw_mask.unsqueeze(-1),('h w c -> 1 c h w'))
-        latent_mask = set_latent_mask.set_mask(encoded_image, raw_mask)[0] #TODO: la maschera non sembra definita correttamente, controllare
+        latent_mask = encoded_image#set_latent_mask.set_mask(encoded_image, raw_mask)[0] #TODO: la maschera non sembra definita correttamente, controllare
         return (image, latent_mask, mas)
 
     RETURN_TYPES = ("IMAGE", "LATENT", "MASK")
