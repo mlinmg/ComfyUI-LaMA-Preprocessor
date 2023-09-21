@@ -1,5 +1,5 @@
 # BEWARE THIS EXTENSION IS NOT FINISHED YET.
-
+It seems that the image cannot be denoised completely, if you have any improvements/suggestions make a pull request, I'll be more than happy to review it
 # ComfyUI LaMA Preprocessor
  A LaMa prerocessor for ComfyUi
  
