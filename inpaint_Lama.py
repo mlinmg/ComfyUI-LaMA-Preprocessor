@@ -69,6 +69,7 @@ def HWC3(x):
         return y
 
 model_lama = None
+
 def resize_image_with_pad(input_image, resolution, skip_hwc3=False):
     if skip_hwc3:
         img = input_image
@@ -149,100 +150,14 @@ def get_unique_axis0(data):
     unique_idxs[1:] = np.any(arr[:-1, :] != arr[1:, :], axis=-1)
     return arr[unique_idxs]
 
-def nake_nms(x):
-    f1 = np.array([[0, 0, 0], [1, 1, 1], [0, 0, 0]], dtype=np.uint8)
-    f2 = np.array([[0, 1, 0], [0, 1, 0], [0, 1, 0]], dtype=np.uint8)
-    f3 = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=np.uint8)
-    f4 = np.array([[0, 0, 1], [0, 1, 0], [1, 0, 0]], dtype=np.uint8)
-    y = np.zeros_like(x)
-    for f in [f1, f2, f3, f4]:
-        np.putmask(y, cv2.dilate(x, kernel=f) == x, x)
-    return y
-
-def remove_pattern(x, kernel):
-    objects = cv2.morphologyEx(x, cv2.MORPH_HITMISS, kernel)
-    objects = np.where(objects > 127)
-    x[objects] = 0
-    return x, objects[0].shape[0] > 0
 
 
-lvmin_kernels_raw = [
-    np.array([
-        [-1, -1, -1],
-        [0, 1, 0],
-        [1, 1, 1]
-    ], dtype=np.int32),
-    np.array([
-        [0, -1, -1],
-        [1, 1, -1],
-        [0, 1, 0]
-    ], dtype=np.int32)
-]
-
-lvmin_kernels = []
-lvmin_kernels += [np.rot90(x, k=0, axes=(0, 1)) for x in lvmin_kernels_raw]
-lvmin_kernels += [np.rot90(x, k=1, axes=(0, 1)) for x in lvmin_kernels_raw]
-lvmin_kernels += [np.rot90(x, k=2, axes=(0, 1)) for x in lvmin_kernels_raw]
-lvmin_kernels += [np.rot90(x, k=3, axes=(0, 1)) for x in lvmin_kernels_raw]
-
-lvmin_prunings_raw = [
-    np.array([
-        [-1, -1, -1],
-        [-1, 1, -1],
-        [0, 0, -1]
-    ], dtype=np.int32),
-    np.array([
-        [-1, -1, -1],
-        [-1, 1, -1],
-        [-1, 0, 0]
-    ], dtype=np.int32)
-]
-
-lvmin_prunings = []
-lvmin_prunings += [np.rot90(x, k=0, axes=(0, 1)) for x in lvmin_prunings_raw]
-lvmin_prunings += [np.rot90(x, k=1, axes=(0, 1)) for x in lvmin_prunings_raw]
-lvmin_prunings += [np.rot90(x, k=2, axes=(0, 1)) for x in lvmin_prunings_raw]
-lvmin_prunings += [np.rot90(x, k=3, axes=(0, 1)) for x in lvmin_prunings_raw]
 
 
-def thin_one_time(x, kernels):
-    y = x
-    is_done = True
-    for k in kernels:
-        y, has_update = remove_pattern(y, k)
-        if has_update:
-            is_done = False
-    return y, is_done
 
-def lvmin_thin(x, prunings=True):
-    y = x
-    for i in range(32):
-        y, is_done = thin_one_time(y, lvmin_kernels)
-        if is_done:
-            break
-    if prunings:
-        y, _ = thin_one_time(y, lvmin_prunings)
-    return y
 
-def postprocess(final_inpaint_feed: torch.Tensor, blur_kernel_size: int=7):
-    print("doing inpaint only post processing")
 
-    final_inpaint_feed = final_inpaint_feed.detach().cpu().numpy()
-    final_inpaint_feed = np.ascontiguousarray(final_inpaint_feed).copy()
-    final_inpaint_mask = final_inpaint_feed[0, 3, :, :].astype(np.float32)
-    final_inpaint_raw = final_inpaint_feed[0, :3].astype(np.float32)
-    sigma = blur_kernel_size
-    final_inpaint_mask = cv2.dilate(final_inpaint_mask, np.ones((sigma, sigma), dtype=np.uint8))
-    final_inpaint_mask = cv2.blur(final_inpaint_mask, (sigma, sigma))[None]
-    _, Hmask, Wmask = final_inpaint_mask.shape
-    final_inpaint_raw = torch.from_numpy(np.ascontiguousarray(final_inpaint_raw).copy())
-    final_inpaint_mask = torch.from_numpy(np.ascontiguousarray(final_inpaint_mask).copy())
-    #mix the images with the mask
-    final_inpaint_raw = final_inpaint_raw.to(final_inpaint_mask.dtype).to(final_inpaint_mask.device)
-    final_inpaint_mask = final_inpaint_mask.to(final_inpaint_raw.dtype).to(final_inpaint_raw.device)
-    final_inpaint_feed = final_inpaint_mask * final_inpaint_raw + (1 - final_inpaint_mask) * final_inpaint_raw
-    final_inpaint_feed = final_inpaint_feed.clip(0, 1)
-    return final_inpaint_feed
+
 
 
 def high_quality_resize(x, size):
@@ -295,15 +210,16 @@ def high_quality_resize(x, size):
         y = np.concatenate([y, inpaint_mask[:, :, None]], axis=2)
 
     return y
+
+
 safeint = lambda x: int(np.round(x))
 
-
 def apply_border_noise(detected_map, outp, mask, h, w):
-    # Mantieni solo i primi 3 canali
+    #keep only the first 3 channels
     detected_map = detected_map[:, :, 0:3].copy()
     detected_map = detected_map.astype(np.float32)
     new_h, new_w, _ = mask.shape
-    # Calcola i fattori di ridimensionamento
+    # calculate the ratio between the old and new image
     old_h, old_w, _ = detected_map.shape
     old_w = float(old_w)
     old_h = float(old_h)
@@ -312,11 +228,11 @@ def apply_border_noise(detected_map, outp, mask, h, w):
     k = min(k0, k1)
 
     if outp == "outpainting":
-        # Trova i pixel sul bordo della maschera
+        # find the borders of the mask
         border_pixels = np.concatenate([detected_map[0, :, :], detected_map[-1, :, :], detected_map[:, 0, :], detected_map[:, -1, :]], axis=0)
-        # Calcola il colore mediano di questi pixel (ignorando i pixel neri)
+        # calculate the median color for the borders
         high_quality_border_color = np.median(border_pixels, axis=0).astype(detected_map.dtype)
-        # Crea lo sfondo di alta qualità
+        # create the background with the same color
         high_quality_background = np.tile(high_quality_border_color[None, None], [safeint(h), safeint(w), 1])
     else: #TODO: controlla che i buchi siano creati e riempiti correttamente
             # find the holes in the mask( where is equal to white)
@@ -341,80 +257,25 @@ def apply_border_noise(detected_map, outp, mask, h, w):
                 # Riempie il buco con il colore mediano su un'immagine vuota
                 high_quality_background[specific_mask] = high_quality_border_color
 
-            # Assicurati che mask abbia le stesse dimensioni di high_quality_background
+    # ensure that the background is 3 channels and has the correct size
     detected_map = high_quality_resize(detected_map, (safeint(old_w * k), safeint(old_h * k)))
     mask = high_quality_resize(mask,(safeint(w), safeint(h)))
     img_rgba = np.zeros((high_quality_background.shape[0], high_quality_background.shape[1], 4), dtype=np.float32)
     img_rgba[:, :, 0:3] = high_quality_background
-    img_rgba[:, :, 3] = 255
+    img_rgba[:, :, 3] = 255 # create a 4 channel image with the alpha channel set to 1
     img_rgba_map = np.zeros((detected_map.shape[0], detected_map.shape[1], 4), dtype=np.float32)
     img_rgba_map[:, :, 0:3] = detected_map
     img_rgba_map[:, :, 3] = 0
     detected_map = img_rgba_map
-    #add mask.squeeze() to high quality bg to make it 4 channels
     high_quality_background = img_rgba
-
     new_h, new_w, _ = detected_map.shape
     pad_h = max(0, (h - new_h) // 2)
     pad_w = max(0, (w - new_w) // 2)
     high_quality_background[pad_h:pad_h + new_h, pad_w:pad_w + new_w] = detected_map
-    #modify the mask the same way you modify high_quality_background
     detected_map = high_quality_background
     detected_map = safe_numpy(detected_map)
     return get_pytorch_control(detected_map), detected_map
 
-
-def create_alpha_mask(w, old_w, h, old_h, detected_map):
-    # Verifica se detected_map ha un canale alpha; se non lo ha, aggiungilo
-    if detected_map.shape[2] < 4:
-        alpha_channel = np.zeros((detected_map.shape[0], detected_map.shape[1], 1), dtype=detected_map.dtype)
-        detected_map = np.concatenate([detected_map, alpha_channel], axis=2)
-
-    # Creiamo un'immagine di sfondo con il canale alpha impostato a 1 e gli altri canali a 0
-    high_quality_background = np.zeros((h, w, 4), dtype=detected_map.dtype)
-    high_quality_background[:, :, 3] = 255  # Imposta il canale alpha a 1 (255)
-
-    # Calcola i valori di padding e applica il padding all'immagine originale
-    pad_h = max(0, (h - old_h) // 2)
-    pad_w = max(0, (w - old_w) // 2)
-
-    # Inserisce l'immagine originale nell'immagine di sfondo (che ha il padding)
-    high_quality_background[pad_h:pad_h + old_h, pad_w:pad_w + old_w, :] = detected_map
-
-    return high_quality_background
-
-
-def decode_latent(latent, vae):
-    return VAEDecode().decode(vae, latent)[0]
-def unload_lama_inpaint():
-    global model_lama
-    if model_lama is not None:
-        model_lama.unload_model()
-
-def call_vae_using_process(inpaint_model, x, batch_size=None, mask=None):
-        try:
-            if x.shape[2] > 3:
-                x = x[:, :,  0:3]
-            x = x * 2.0 - 1.0
-            if mask is not None:
-                # TODO: throws error if no mask is given
-                x = x * (1.0 - mask)
-
-            if inpaint_model is not None:
-
-                vae_output = inpaint_model.encode(inpaint_model,x)
-                vae_output = inpaint_model.sd_model.get_first_stage_encoding(vae_output)
-                print(f'ControlNet used VAE to encode {vae_output.shape}.')
-            else:
-                raise AssertionError('No inpaint_model found.')
-            latent = vae_output
-            if batch_size is not None and latent.shape[0] != batch_size:
-                latent = torch.cat([latent.clone() for _ in range(batch_size)], dim=0)
-            return latent
-        except Exception as e:
-            print(e)
-            raise ValueError(
-                'ControlNet failed to use VAE. Please try to add `--no-half-vae`, `--no-half` and remove `--precision full` in launch cmd.')
 
 
 class lamaPreprocessor:
@@ -444,16 +305,16 @@ class lamaPreprocessor:
         pixels = pixels.clone()
         pixels = (pixels.numpy()*255).astype(np.uint8)
         pixels = HWC3(pixels)
-        # Crea una maschera booleana dove i pixel non sono neri
+        # Create a boolean mask
         mask_non_black = (mask[:, :, 0] == 0)
         cv2.resize(mask, (((mask.shape[1]) // 8) * 8, ((mask.shape[0]) // 8) * 8), interpolation=3)        # Trova le coordinate dei pixel non neri
         coords = np.column_stack(np.nonzero(mask_non_black))
 
-        # Trova i valori minimo e massimo per x e y
+        # find the min and max coordinates
         y_min, y_max = np.min(coords[:, 0]), np.max(coords[:, 0])
         x_min, x_max = np.min(coords[:, 1]), np.max(coords[:, 1])
 
-        # "Croppa" l'immagine per mantenere solo i pixel non neri
+        # crop the image where the non-black pixels are
         img_non_black = pixels[y_min:y_max + 1, x_min:x_max + 1]
         #Image.fromarray(pixels).save("C:\\Users\marco\Desktop\lama-main\pixels_just_before_lama.png")
         #add a zero channel aplha to pixels
@@ -481,7 +342,6 @@ class lamaPreprocessor:
         raw_mask = img[:, :, 3:4]#test
 
         res = 256  # Always use 256 since lama is trained on 256
-        #TODO: questa restituisce i bordi troppo chiari, controllare
         image_res, remove_pad = resize_image_with_pad(img, res, skip_hwc3=True)
 
         global model_lama
@@ -509,7 +369,6 @@ class lamaPreprocessor:
         # Utilizza la maschera di sfumatura in np.where per creare un effetto di sfumatura
         final_img = np.where(mask_blur_rgb > 0.5, prd_color[..., :3], input_img_resized[:, :, 0:3])
         # Aggiungi il canale alpha di high_quality_background al risultato finale
-
         final_img = get_pytorch_control(final_img)
         final_img = rearrange(final_img, ('1 c h w -> 1 h w c'))
         raw_mask = torch.from_numpy(mask_blur) #raw_mask = rearrange(torch.from_numpy(np.ascontiguousarray(mask_blur_rgb).copy()) /255.0,('h w c -> 1 h w c'))
