@@ -1,6 +1,5 @@
 # BEWARE THIS EXTENSION IS NOT FINISHED YET.
-# Please clone this repo with lfs enabled
-You can enable it by typing `git lfs install` in your console, before any other git command
+
 # ComfyUI LaMA Preprocessor
  A LaMa prerocessor for ComfyUi
  
