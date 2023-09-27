@@ -6,8 +6,8 @@ This preprocessor finally enable user to generate coherent inpaint and outpaint 
 This is a simple workflow example. You can use it downloading workflows/workflow_lama.json and then dropping it a comfyui tab
 ![workflow](https://github.com/mlinmg/ComfyUI-LaMA-Preprocessor/assets/121761685/098f40d6-307c-4ad7-b0c0-5f40ea2e777f)
 
+---
 
-*---*
 
 This are some non cherry picked examples all based on this image
 
