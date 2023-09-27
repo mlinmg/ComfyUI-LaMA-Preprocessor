@@ -4,19 +4,22 @@ The best results are given on landscape inpaint, not so much in animation.
 This preprocessor finally enable user to generate coherent inpaint and outpaint prompt-free
 ## A LaMa prerocessor for ComfyUi
 This is a simple workflow example. You can use it downloading workflows/workflow_lama.json and then dropping it a comfyui tab
-![workflow](https://github.com/mlinmg/ComfyUI-LaMA-Preprocessor/assets/121761685/73d422ae-a30c-43de-acf1-44bbfaa28530)
+![workflow](https://github.com/mlinmg/ComfyUI-LaMA-Preprocessor/assets/121761685/098f40d6-307c-4ad7-b0c0-5f40ea2e777f)
 
----
+
+*---*
 
 This are some non cherry picked examples all based on this image
-![startingImage](https://github.com/mlinmg/ComfyUI-LaMA-Preprocessor/assets/121761685/6d6067fd-dfa9-414b-99c8-3151d0a15dc7)
+
+![startingImage](https://github.com/mlinmg/ComfyUI-LaMA-Preprocessor/assets/121761685/18b937d6-bcda-4606-a3b0-b24af55d27dd)
+
 
 ---
 
-![ComfyUI_01581_](https://github.com/mlinmg/ComfyUI-LaMA-Preprocessor/assets/121761685/58657498-e57a-49e5-910b-d7ee309ca26c)
-![ComfyUI_01580_](https://github.com/mlinmg/ComfyUI-LaMA-Preprocessor/assets/121761685/1131312a-d77a-496d-960d-54450eb1dde0)
-![ComfyUI_01579_](https://github.com/mlinmg/ComfyUI-LaMA-Preprocessor/assets/121761685/a2d2a1a9-d2a8-4533-9227-678b9dd7f313)
-![ComfyUI_01578_](https://github.com/mlinmg/ComfyUI-LaMA-Preprocessor/assets/121761685/5da44552-d3ab-468c-bc11-a1e5e8181b75)
+![ComfyUI_01581_](https://github.com/mlinmg/ComfyUI-LaMA-Preprocessor/assets/121761685/3adbc1f8-bb3e-4ae5-b31b-d7fb8624f0ae)
+![ComfyUI_01580_](https://github.com/mlinmg/ComfyUI-LaMA-Preprocessor/assets/121761685/77f73d96-2612-431d-bd3c-7e6f4c2503c0)
+![ComfyUI_01579_](https://github.com/mlinmg/ComfyUI-LaMA-Preprocessor/assets/121761685/5715229b-6b6e-4f2e-917c-97b09758c805)
+![ComfyUI_01578_](https://github.com/mlinmg/ComfyUI-LaMA-Preprocessor/assets/121761685/dbe1a705-7574-4b2e-a2c6-d06708a38261)
 
 
 You can find the processor in image/preprocessors
