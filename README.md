@@ -1,7 +1,9 @@
 # LaMa Preprocessor (WIP)
-The best results are given on landscape inpaint, not so much in animation.
 
-This preprocessor finally enable user to generate coherent inpaint and outpaint prompt-free
+This preprocessor finally enable user to generate coherent inpaint and outpaint **prompt-free**
+
+The best results are given on landscapes, not so much in drawings/animation.
+
 ## A LaMa prerocessor for ComfyUi
 This is a simple workflow example. You can use it downloading workflows/workflow_lama.json and then dropping it a ComfyUI tab
 ![workflow](https://github.com/mlinmg/ComfyUI-LaMA-Preprocessor/assets/121761685/098f40d6-307c-4ad7-b0c0-5f40ea2e777f)
