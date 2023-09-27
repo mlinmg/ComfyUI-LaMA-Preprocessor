@@ -112,64 +112,6 @@
       ]
     },
     {
-      "id": 129,
-      "type": "lamaPreprocessor",
-      "pos": [
-        54,
-        640
-      ],
-      "size": {
-        "0": 418.5,
-        "1": 98
-      },
-      "flags": {},
-      "order": 12,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "pixels",
-          "type": "IMAGE",
-          "link": 271
-        },
-        {
-          "name": "mask",
-          "type": "MASK",
-          "link": 272
-        },
-        {
-          "name": "vae",
-          "type": "VAE",
-          "link": 273
-        }
-      ],
-      "outputs": [
-        {
-          "name": "LaMa Preprocessed Image",
-          "type": "IMAGE",
-          "links": [
-            276
-          ],
-          "shape": 3,
-          "slot_index": 0
-        },
-        {
-          "name": "LaMa Preprocessed Latent",
-          "type": "LATENT",
-          "links": [
-            275
-          ],
-          "shape": 3,
-          "slot_index": 1
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "lamaPreprocessor"
-      },
-      "widgets_values": [
-        "outpainting"
-      ]
-    },
-    {
       "id": 95,
       "type": "Reroute",
       "pos": [
@@ -243,44 +185,203 @@
       }
     },
     {
-      "id": 10,
-      "type": "LoadImage",
+      "id": 97,
+      "type": "Reroute",
       "pos": [
-        -1237,
-        816
+        -325,
+        613
       ],
-      "size": {
-        "0": 811.68505859375,
-        "1": 774.005126953125
-      },
+      "size": [
+        75,
+        26
+      ],
       "flags": {},
-      "order": 3,
+      "order": 6,
       "mode": 0,
+      "inputs": [
+        {
+          "name": "",
+          "type": "*",
+          "link": 186
+        }
+      ],
       "outputs": [
         {
-          "name": "IMAGE",
-          "type": "IMAGE",
+          "name": "",
+          "type": "VAE",
           "links": [
-            257
+            179,
+            273
           ],
-          "shape": 3,
           "slot_index": 0
-        },
-        {
-          "name": "MASK",
-          "type": "MASK",
-          "links": [],
-          "shape": 3,
-          "slot_index": 1
         }
       ],
       "properties": {
-        "Node name for S&R": "LoadImage"
+        "showOutputText": false,
+        "horizontal": false
+      }
+    },
+    {
+      "id": 6,
+      "type": "CLIPTextEncode",
+      "pos": [
+        -207,
+        344
+      ],
+      "size": {
+        "0": 312.5093688964844,
+        "1": 76
+      },
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 172
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            247
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CLIPTextEncode"
       },
       "widgets_values": [
-        "imgnonlack (1).png",
-        "image"
+        ""
       ]
+    },
+    {
+      "id": 7,
+      "type": "CLIPTextEncode",
+      "pos": [
+        -210,
+        454
+      ],
+      "size": {
+        "0": 315.06439208984375,
+        "1": 76
+      },
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 173
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            285
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CLIPTextEncode"
+      },
+      "widgets_values": [
+        ""
+      ]
+    },
+    {
+      "id": 76,
+      "type": "ControlNetApply",
+      "pos": [
+        185,
+        330
+      ],
+      "size": {
+        "0": 317.4000244140625,
+        "1": 98
+      },
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "conditioning",
+          "type": "CONDITIONING",
+          "link": 247
+        },
+        {
+          "name": "control_net",
+          "type": "CONTROL_NET",
+          "link": 261,
+          "slot_index": 1
+        },
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 276
+        }
+      ],
+      "outputs": [
+        {
+          "name": "CONDITIONING",
+          "type": "CONDITIONING",
+          "links": [
+            234
+          ],
+          "shape": 3,
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ControlNetApply"
+      },
+      "widgets_values": [
+        1
+      ]
+    },
+    {
+      "id": 125,
+      "type": "Reroute",
+      "pos": [
+        46,
+        529
+      ],
+      "size": [
+        75,
+        26
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "",
+          "type": "*",
+          "link": 260
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "CONTROL_NET",
+          "links": [
+            261
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "showOutputText": false,
+        "horizontal": false
+      }
     },
     {
       "id": 124,
@@ -319,47 +420,69 @@
       }
     },
     {
-      "id": 125,
-      "type": "Reroute",
+      "id": 129,
+      "type": "lamaPreprocessor",
       "pos": [
-        392,
-        532
+        -240,
+        627
       ],
-      "size": [
-        75,
-        26
-      ],
+      "size": {
+        "0": 418.5,
+        "1": 98
+      },
       "flags": {},
-      "order": 11,
+      "order": 12,
       "mode": 0,
       "inputs": [
         {
-          "name": "",
-          "type": "*",
-          "link": 260
+          "name": "pixels",
+          "type": "IMAGE",
+          "link": 271
+        },
+        {
+          "name": "mask",
+          "type": "MASK",
+          "link": 272
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 273
         }
       ],
       "outputs": [
         {
-          "name": "",
-          "type": "CONTROL_NET",
+          "name": "LaMa Preprocessed Image",
+          "type": "IMAGE",
           "links": [
-            261
+            276
           ],
+          "shape": 3,
           "slot_index": 0
+        },
+        {
+          "name": "LaMa Preprocessed Latent",
+          "type": "LATENT",
+          "links": [
+            275
+          ],
+          "shape": 3,
+          "slot_index": 1
         }
       ],
       "properties": {
-        "showOutputText": false,
-        "horizontal": false
-      }
+        "Node name for S&R": "lamaPreprocessor"
+      },
+      "widgets_values": [
+        "outpainting"
+      ]
     },
     {
       "id": 18,
       "type": "ImagePadForOutpaint",
       "pos": [
-        -388,
-        814
+        -856,
+        818
       ],
       "size": {
         "0": 315,
@@ -407,11 +530,51 @@
       ]
     },
     {
+      "id": 10,
+      "type": "LoadImage",
+      "pos": [
+        -495,
+        771
+      ],
+      "size": [
+        416.19319570010884,
+        405.8508404613276
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            257
+          ],
+          "shape": 3,
+          "slot_index": 0
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": [],
+          "shape": 3,
+          "slot_index": 1
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "imgnonlack (1).png",
+        "image"
+      ]
+    },
+    {
       "id": 117,
       "type": "RepeatLatentBatch",
       "pos": [
-        508,
-        660
+        231,
+        643
       ],
       "size": {
         "0": 315,
@@ -446,61 +609,47 @@
       ]
     },
     {
-      "id": 76,
-      "type": "ControlNetApply",
+      "id": 131,
+      "type": "Reroute",
       "pos": [
-        568,
-        271
+        437,
+        455
       ],
-      "size": {
-        "0": 317.4000244140625,
-        "1": 98
-      },
+      "size": [
+        75,
+        26
+      ],
       "flags": {},
-      "order": 14,
+      "order": 13,
       "mode": 0,
       "inputs": [
         {
-          "name": "conditioning",
-          "type": "CONDITIONING",
-          "link": 247
-        },
-        {
-          "name": "control_net",
-          "type": "CONTROL_NET",
-          "link": 261,
-          "slot_index": 1
-        },
-        {
-          "name": "image",
-          "type": "IMAGE",
-          "link": 276
+          "name": "",
+          "type": "*",
+          "link": 285
         }
       ],
       "outputs": [
         {
-          "name": "CONDITIONING",
+          "name": "",
           "type": "CONDITIONING",
           "links": [
-            234
+            279
           ],
-          "shape": 3,
           "slot_index": 0
         }
       ],
       "properties": {
-        "Node name for S&R": "ControlNetApply"
-      },
-      "widgets_values": [
-        0.63
-      ]
+        "showOutputText": false,
+        "horizontal": false
+      }
     },
     {
       "id": 49,
       "type": "KSampler",
       "pos": [
-        917,
-        284
+        597,
+        421
       ],
       "size": {
         "0": 315,
@@ -556,47 +705,11 @@
       ]
     },
     {
-      "id": 132,
-      "type": "Reroute",
-      "pos": [
-        1270.8106771654652,
-        604.680174458725
-      ],
-      "size": [
-        75,
-        26
-      ],
-      "flags": {},
-      "order": 17,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "",
-          "type": "*",
-          "link": 281
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "LATENT",
-          "links": [
-            283
-          ],
-          "slot_index": 0
-        }
-      ],
-      "properties": {
-        "showOutputText": false,
-        "horizontal": false
-      }
-    },
-    {
       "id": 8,
       "type": "VAEDecode",
       "pos": [
-        977,
-        606
+        591,
+        724
       ],
       "size": {
         "0": 210,
@@ -632,48 +745,11 @@
       }
     },
     {
-      "id": 97,
-      "type": "Reroute",
-      "pos": [
-        -325,
-        613
-      ],
-      "size": [
-        75,
-        26
-      ],
-      "flags": {},
-      "order": 6,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "",
-          "type": "*",
-          "link": 186
-        }
-      ],
-      "outputs": [
-        {
-          "name": "",
-          "type": "VAE",
-          "links": [
-            179,
-            273
-          ],
-          "slot_index": 0
-        }
-      ],
-      "properties": {
-        "showOutputText": false,
-        "horizontal": false
-      }
-    },
-    {
       "id": 9,
       "type": "SaveImage",
       "pos": [
-        522,
-        783
+        -20,
+        815
       ],
       "size": {
         "0": 677.9695434570312,
@@ -695,70 +771,32 @@
       ]
     },
     {
-      "id": 6,
-      "type": "CLIPTextEncode",
-      "pos": [
-        134,
-        259
-      ],
-      "size": {
-        "0": 312.5093688964844,
-        "1": 76
-      },
-      "flags": {},
-      "order": 9,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "clip",
-          "type": "CLIP",
-          "link": 172
-        }
-      ],
-      "outputs": [
-        {
-          "name": "CONDITIONING",
-          "type": "CONDITIONING",
-          "links": [
-            247
-          ],
-          "slot_index": 0
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "CLIPTextEncode"
-      },
-      "widgets_values": [
-        ""
-      ]
-    },
-    {
-      "id": 131,
+      "id": 132,
       "type": "Reroute",
       "pos": [
-        801,
-        381
+        988,
+        712
       ],
       "size": [
         75,
         26
       ],
       "flags": {},
-      "order": 13,
+      "order": 17,
       "mode": 0,
       "inputs": [
         {
           "name": "",
           "type": "*",
-          "link": 285
+          "link": 281
         }
       ],
       "outputs": [
         {
           "name": "",
-          "type": "CONDITIONING",
+          "type": "LATENT",
           "links": [
-            279
+            283
           ],
           "slot_index": 0
         }
@@ -767,44 +805,6 @@
         "showOutputText": false,
         "horizontal": false
       }
-    },
-    {
-      "id": 7,
-      "type": "CLIPTextEncode",
-      "pos": [
-        141,
-        379
-      ],
-      "size": {
-        "0": 315.06439208984375,
-        "1": 76
-      },
-      "flags": {},
-      "order": 10,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "clip",
-          "type": "CLIP",
-          "link": 173
-        }
-      ],
-      "outputs": [
-        {
-          "name": "CONDITIONING",
-          "type": "CONDITIONING",
-          "links": [
-            285
-          ],
-          "slot_index": 0
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "CLIPTextEncode"
-      },
-      "widgets_values": [
-        ""
-      ]
     }
   ],
   "links": [
