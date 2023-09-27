@@ -9,7 +9,7 @@ This is a simple workflow example. You can use it downloading workflows/workflow
 ---
 
 
-This are some non cherry picked examples all based on this image
+This are some non cherry picked results, all obtained starting from this image
 
 ![startingImage](https://github.com/mlinmg/ComfyUI-LaMA-Preprocessor/assets/121761685/18b937d6-bcda-4606-a3b0-b24af55d27dd)
 
