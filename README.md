@@ -1,6 +1,6 @@
 # LaMa Preprocessor (WIP)
 
-This preprocessor finally enable user to generate coherent inpaint and outpaint **prompt-free**
+This preprocessor finally enable users to generate coherent inpaint and outpaint **prompt-free**
 
 The best results are given on landscapes, not so much in drawings/animation.
 
