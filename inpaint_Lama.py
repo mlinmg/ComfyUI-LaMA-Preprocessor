@@ -11,7 +11,9 @@ import numpy as np
 import os
 import sys
 from PIL import Image
+from numpy import dtype
 from scipy import ndimage
+from torch import device
 
 # Get the absolute path of various directories
 my_dir = os.path.dirname(os.path.abspath(__file__))
@@ -89,34 +91,6 @@ def resize_image_with_pad(input_image, resolution, skip_hwc3=False):
 
     return safer_memory(img_padded), remove_pad
 
-#debug
-def show_image(data):
-    # Se i dati sono un tensore PyTorch, convertili in un array numpy
-    if isinstance(data, torch.Tensor):
-        data = data.numpy()
-
-    # Verifica le dimensioni dei dati
-    if len(data.shape) != 3:
-        raise ValueError("I dati devono avere 3 dimensioni: (c, h, w)")
-
-    # Ottieni il numero di canali
-    c = data.shape[0]
-
-    # Se c è 1, convertiamo l'array in 2D per visualizzarlo come un'immagine in scala di grigi
-    if c == 1:
-        data = np.squeeze(data)
-        mode = 'L'
-    elif c == 3:
-        # Se c è 3, trasponiamo l'array per avere la forma (h, w, c)
-        data = data.transpose(1, 2, 0)
-        mode = 'RGB'
-    else:
-        raise ValueError("Il numero di canali deve essere 1 o 3")
-
-    # Crea un'immagine PIL e visualizzala
-    img = Image.fromarray(data.astype('uint8'), mode)
-    img.show()
-
 
 import numpy as np
 import torch
@@ -130,7 +104,6 @@ def safe_numpy(x):
     y = y.copy()
     return y
 
-
 def get_pytorch_control(x):
     y = torch.from_numpy(x)
     y = y.float() / 255.0
@@ -140,7 +113,6 @@ def get_pytorch_control(x):
     y = y.clone()
     return y
 
-
 def get_unique_axis0(data):
     arr = np.asanyarray(data)
     idxs = np.lexsort(arr.T)
@@ -149,16 +121,6 @@ def get_unique_axis0(data):
     unique_idxs[:1] = True
     unique_idxs[1:] = np.any(arr[:-1, :] != arr[1:, :], axis=-1)
     return arr[unique_idxs]
-
-
-
-
-
-
-
-
-
-
 
 def high_quality_resize(x, size):
     # Written by lvmin
@@ -234,16 +196,16 @@ def apply_border_noise(detected_map, outp, mask, h, w):
         high_quality_border_color = np.median(border_pixels, axis=0).astype(detected_map.dtype)
         # create the background with the same color
         high_quality_background = np.tile(high_quality_border_color[None, None], [safeint(h), safeint(w), 1])
-    else: #TODO: controlla che i buchi siano creati e riempiti correttamente
+    else: #TODO: make sure that everything would work with inpaint
             # find the holes in the mask( where is equal to white)
-            mask = mask.max(axis=2) > 254  # Adatta questa soglia come necessario
+            mask = mask.max(axis=2) > 254  # TODO: adapt this
             labeled, num_features = ndimage.label(mask)
             high_quality_background = np.zeros(
-                (h, w, 3))  # Crea un'immagine vuota con le stesse dimensioni
+                (h, w, 3))  # Make an empty image
             for i in range(1, num_features + 1):
                 specific_mask = labeled == i
 
-                # Trova i bordi del buco specifico
+                # find the 'holes' borders
                 borders = np.concatenate([
                     detected_map[1:, :][specific_mask[1:, :] & ~specific_mask[:-1, :]],
                     detected_map[:-1, :][specific_mask[:-1, :] & ~specific_mask[1:, :]],
@@ -251,15 +213,14 @@ def apply_border_noise(detected_map, outp, mask, h, w):
                     detected_map[:, :-1][specific_mask[:, :-1] & ~specific_mask[:, 1:]]
                 ], axis=0)
 
-                # Calcola il colore mediano per il buco specifico
+                # calculate the mean of the single borders
                 high_quality_border_color = np.median(borders, axis=0).astype(detected_map.dtype)
 
-                # Riempie il buco con il colore mediano su un'immagine vuota
+                # fill the hole with its specific filling color
                 high_quality_background[specific_mask] = high_quality_border_color
 
     # ensure that the background is 3 channels and has the correct size
     detected_map = high_quality_resize(detected_map, (safeint(old_w * k), safeint(old_h * k)))
-    mask = high_quality_resize(mask,(safeint(w), safeint(h)))
     img_rgba = np.zeros((high_quality_background.shape[0], high_quality_background.shape[1], 4), dtype=np.float32)
     img_rgba[:, :, 0:3] = high_quality_background
     img_rgba[:, :, 3] = 255 # create a 4 channel image with the alpha channel set to 1
@@ -276,6 +237,37 @@ def apply_border_noise(detected_map, outp, mask, h, w):
     detected_map = safe_numpy(detected_map)
     return get_pytorch_control(detected_map), detected_map
 
+from ldm.modules.distributions.distributions import DiagonalGaussianDistribution
+
+class VAEWrapper:
+    def __init__(self, vae_instance):
+        super().__init__()  # o qualsiasi altro argomento necessario per il costruttore di VAE
+        self.vae = vae_instance
+
+    def to(self, where=None):
+        if isinstance(where, torch.device):
+            self.vae.first_stage_model.to(where)
+        elif isinstance(where, torch.dtype):
+            for module in self.vae.first_stage_model.modules():
+                module.to(dtype=where)
+        else:
+            raise ValueError("Unsupported type for 'where' argument")
+
+
+
+    def get_first_stage_encoding_(self, encoder_posterior):
+        if type(encoder_posterior).__name__ == "DiagonalGaussianDistribution":#had to use a string comparison since theere was a problem with isinstance
+            z = encoder_posterior.sample()
+        elif type(encoder_posterior).__name__ == "torch.Tensor":
+            z = encoder_posterior
+        else:
+            raise NotImplementedError(f"encoder_posterior of type '{type(encoder_posterior)}' not yet implemented")
+        return self.vae.scale_factor * z
+
+    @torch.no_grad()
+    def encode_first_stage_(self, x):
+        self.to(torch.device('cuda'))
+        return self.vae.first_stage_model.encode(x)
 
 
 class lamaPreprocessor:
@@ -283,31 +275,40 @@ class lamaPreprocessor:
     def INPUT_TYPES(cls):
         return {"required":
                     {"pixels": ("IMAGE", ),
-                     "type": (["outpainting", "inpainting"], ),
+                     "type": (["outpainting"], ),#,"inpainting"], ),
                      "mask": ("MASK",),
-                        "vae": ("VAE",),
+                     "vae": ("VAE",),
                      },
 
                  }
 
+    def _encode_image(self, vae, image):
+        #encoder = VAEEncode()
+        wrapper = VAEWrapper(vae)
+        image = image[:, :, :, 0:3]
+        image_without_alpha = image.to(wrapper.vae.vae_dtype) * 2.0 - 1.0
+        image = rearrange(image_without_alpha, '1 w h c -> 1 c w h')
+        encoded_image = wrapper.encode_first_stage_(image)
+        if torch.all(torch.isnan(encoded_image.mean)):
+            print("All values produced are NANs, automatically upcasting dtype to float32")
+            wrapper.to(torch.float32)
+            encoded_image = wrapper.encode_first_stage_(image)
+        vae_output = wrapper.get_first_stage_encoding_(encoded_image)
+        return vae_output
 
-    def preprocess(self,pixels,vae, type,mask=None):
-
-        #mask = torch.nn.functional.interpolate(mask.reshape((-1, 1, mask.shape[-2], mask.shape[-1])),
-                                               #size=(pixels.shape[1], pixels.shape[2]), mode="bilinear")
-        #mask = rearrange(mask, '1 c h w -> h w c')
+    def preprocess(self, pixels,vae, type='outpaint',mask=None):
+        global model_lama
         mask = (mask.numpy()*255).astype(np.float32)
         mask = np.expand_dims(mask, -1)
-        #mask = high_quality_resize(mask, (((mask.shape[1]) // 8) * 8, ((mask.shape[0]) // 8) * 8))
-
 
         pixels = rearrange(pixels, '1 h w c -> h w c')
         pixels = pixels.clone()
         pixels = (pixels.numpy()*255).astype(np.uint8)
         pixels = HWC3(pixels)
+
         # Create a boolean mask
         mask_non_black = (mask[:, :, 0] == 0)
-        cv2.resize(mask, (((mask.shape[1]) // 8) * 8, ((mask.shape[0]) // 8) * 8), interpolation=3)        # Trova le coordinate dei pixel non neri
+        cv2.resize(mask, (((mask.shape[1]) // 8) * 8, ((mask.shape[0]) // 8) * 8), interpolation=3)        # find the non black pixel coordinates
         coords = np.column_stack(np.nonzero(mask_non_black))
 
         # find the min and max coordinates
@@ -316,76 +317,100 @@ class lamaPreprocessor:
 
         # crop the image where the non-black pixels are
         img_non_black = pixels[y_min:y_max + 1, x_min:x_max + 1]
-        #Image.fromarray(pixels).save("C:\\Users\marco\Desktop\lama-main\pixels_just_before_lama.png")
-        #add a zero channel aplha to pixels
-        if type == "outpainting":#TODO: solo un lato alla volta è modificabile, se si vuole modificare anche l'altro lato bisogna fare un altra chiamata
+        vertical_expansion = False
+        horizontal_expansion = False
+        if type == "outpainting":
             h = ((mask.shape[0]) // 8) * 8
             w = ((mask.shape[1]) // 8) * 8
-            #Image.fromarray(img_non_black[:, :, 0:3].astype('uint8')).save(r"C:\Users\marco\Desktop\moisy\imm_pre.png")
-            #pixels = np.concatenate([pixels, mask], axis=2)
-            #img_non_black_corr = high_quality_resize(img_non_black, (w, h))
+            if img_non_black.shape[0] != mask.shape[0]:
+                vertical_expansion = True
+            if img_non_black.shape[1] != mask.shape[1]:
+                horizontal_expansion = True
+            if horizontal_expansion:
+                if vertical_expansion:
+                    mask_horizontal = mask[:, x_min:x_max + 1]
+                    _, img = apply_border_noise(img_non_black, type, mask_horizontal, mask_horizontal.shape[0], mask_horizontal.shape[1])
+                else:
+                    _, img = apply_border_noise(img_non_black, type, mask, h, w)
+                H, W, C = img.shape
+                raw_mask = img[:, :, 3:4]  # test
+                res = 256  # Always use 256 since lama is trained on 256
+                image_res, remove_pad = resize_image_with_pad(img, res, skip_hwc3=True)
+                if model_lama is None:
+                    model_lama = LamaInpainting()
+                # apply model lama
+                try:
+                    prd_color = model_lama(image_res)
+                    # model_lama.unload_model()
+                except Exception as e:
+                    print(e)
+                    raise e
+                prd_color = remove_pad(prd_color)
+                prd_color = cv2.resize(prd_color, (W, H))
+                mask_alpha = raw_mask > 0
+                # add alpha channel to the image
+                final_img_with_alpha = np.zeros((H, W, 4), dtype=np.float32)
+                final_img_with_alpha[:, :, 3] = np.where(mask_alpha.squeeze(), 255, 0)
+                final_img_with_alpha[:, :, 0:3] = np.where(mask_alpha, prd_color, img[:, :, 0:3])
+                img_non_black = final_img_with_alpha
+            if vertical_expansion:
+                if horizontal_expansion:
+                    mask_horizontal = mask[y_min:y_max + 1, :]
+                    _, img = apply_border_noise(img_non_black, type, mask_horizontal, mask_horizontal.shape[0], mask_horizontal.shape[1])
+                else:
+                    _, img = apply_border_noise(img_non_black, type, mask, h, w)
+                H, W, C = img.shape
+                # raw_color = img[:, :, 0:3]#test
+                raw_mask = img[:, :, 3:4]  # test
+                res = 256  # Always use 256 since lama is trained on 256
+                image_res, remove_pad = resize_image_with_pad(img, res, skip_hwc3=True)
 
-            #pixels = np.concatenate([pixels, mask], axis=2)
-            control, img= apply_border_noise(img_non_black, type, mask, h, w)
-        elif type == "inpainting":
+                if model_lama is None:
+                    model_lama = LamaInpainting()
+                # apply model lama
+                try:
+                    prd_color = model_lama(image_res)
+                    # model_lama.unload_model()
+                except Exception as e:
+                    print(e)
+                    raise e
+                prd_color = remove_pad(prd_color)
+                prd_color = cv2.resize(prd_color, (W, H))
+                mask_alpha = raw_mask > 0
+                # add alpha channel to the image
+                final_img_with_alpha = np.zeros((H, W, 4), dtype=np.float32)
+                final_img_with_alpha[:, :, 3] = np.where(mask_alpha.squeeze(), 255, 0)
+                final_img_with_alpha[:, :, 0:3] = np.where(mask_alpha, prd_color, img[:, :, 0:3])
+
+
+        elif type == "inpainting":#TODO: actually implement this method
             if mask is None:
                 raise ValueError("If you want to use inpainting you must provide a mask")
             h = (pixels.shape[2])
             w = (pixels.shape[1])
             _, img = apply_border_noise(pixels, type, mask, h, w)
-        else:
-            raise ValueError("Type must be outpainting or inpainting")
+
 
         #imag_noise = noise_hack(pixels, vae)
-        H, W, C = img.shape
-        #raw_color = img[:, :, 0:3]#test
-        raw_mask = img[:, :, 3:4]#test
 
-        res = 256  # Always use 256 since lama is trained on 256
-        image_res, remove_pad = resize_image_with_pad(img, res, skip_hwc3=True)
 
-        global model_lama
-        if model_lama is None:
-            model_lama = LamaInpainting()
 
-        # applied auto inversion
-        try:
-            prd_color = model_lama(image_res)
-            #model_lama.unload_model()
-        except Exception as e:
-            print(e)
-            raise e
-        prd_color = remove_pad(prd_color)
-        prd_color = cv2.resize(prd_color, (W, H))
-        mask_alpha = raw_mask > 0
-        # Dilata la maschera
-        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
-        mask_dilated = cv2.dilate(mask_alpha.astype(np.uint8), kernel)
-        # Crea una maschera di sfumatura
-        mask_blur = cv2.GaussianBlur(mask_dilated.astype(np.float32), (21, 21), 0)
-        # Ripete la maschera di sfumatura per tutti e 3 i canali
-        mask_blur_rgb = np.repeat(mask_blur[..., np.newaxis], 3, axis=2)
-        input_img_resized = high_quality_resize(pixels, (W, H))
-        # Utilizza la maschera di sfumatura in np.where per creare un effetto di sfumatura
-        final_img = np.where(mask_blur_rgb > 0.5, prd_color[..., :3], input_img_resized[:, :, 0:3])
-        # Aggiungi il canale alpha di high_quality_background al risultato finale
-        final_img = get_pytorch_control(final_img)
+
+        final_img = get_pytorch_control(final_img_with_alpha)
         final_img = rearrange(final_img, ('1 c h w -> 1 h w c'))
-        raw_mask = torch.from_numpy(mask_blur) #raw_mask = rearrange(torch.from_numpy(np.ascontiguousarray(mask_blur_rgb).copy()) /255.0,('h w c -> 1 h w c'))
-        image = final_img.clone()
-        #image[raw_mask > 0.5] = -1.0  # set as masked pixel
-        encoder = VAEEncode()
-        set_latent_mask = SetLatentNoiseMask()
-        encoded_image = encoder.encode(vae=vae, pixels=image)[0] #TODO: sembra corretto
-        #inserisci rumore nel latente
-        #create a mask with the same size of mask but all ones
-        mas = rearrange(raw_mask.unsqueeze(-1),('h w c -> 1 c h w'))
-        latent_mask = encoded_image#set_latent_mask.set_mask(encoded_image, raw_mask)[0] #TODO: la maschera non sembra definita correttamente, controllare
-        return (image, latent_mask, mas)
+        encoded_image = self._encode_image(vae, final_img)
+        encoded_image_dict = {'samples':encoded_image.cpu()}
+        c = final_img[:, :, :, 0:3]
+        m = final_img[:, :, :, 3:4]
+        m = (m > 0.5).float()
+        image = c * (1 - m) - m # create hint image
+        return (image, encoded_image_dict)
 
-    RETURN_TYPES = ("IMAGE", "LATENT", "MASK")
-    RETURN_NAMES = ("LaMa Preprocessed Image", "LaMa Preprocessed Latent", "LaMa Preprocessed Mask")
+    RETURN_TYPES = ("IMAGE", "LATENT")
+    RETURN_NAMES = ("LaMa Preprocessed Image", "LaMa Preprocessed Latent")
     FUNCTION = "preprocess"
     CATEGORY = "image/preprocessors"
+
+
 NODE_CLASS_MAPPINGS = {
     "LaMaPreprocessor": lamaPreprocessor,}
