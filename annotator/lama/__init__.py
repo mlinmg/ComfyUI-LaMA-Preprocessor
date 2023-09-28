@@ -19,7 +19,6 @@ from saicinpainting.training.trainers import load_checkpoint
 devices = 'cuda' if torch.cuda.is_available() else 'cpu'
 models_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models','lama')
 os.makedirs(models_path, exist_ok=True)
-#Q: how are the images normilized? A: they are divided by 255.0
 
 class LamaInpainting:
     model_dir = os.path.join(models_path, "lama")
@@ -53,10 +52,8 @@ class LamaInpainting:
             self.load_model()
         self.model.to(self.device)
         color = np.ascontiguousarray(input_image[:, :, 0:3]).astype(np.float32) / 255
-        #Image.fromarray((color).astype('uint8')).save("C:\\Users\marco\Desktop\lama-main\color_just_before_lama_mio.png")
 
         mask = np.ascontiguousarray(input_image[:, :, 3:4]).astype(np.float32) / 255
-        #Image.fromarray((mask).astype('uint8')).save("C:\\Users\marco\Desktop\lama-main\mask_just_before_lama_mio.png")
 
         with torch.no_grad():
             color = torch.from_numpy(color).float().to(self.device)
@@ -64,7 +61,6 @@ class LamaInpainting:
             mask = (mask > 0.5).float()
             color = color * (1 - mask)
             image_feed = torch.cat([color, mask], dim=2)
-            Image.fromarray(((image_feed.cpu().numpy())*255).astype('uint8')).save("C:\\Users\marco\Desktop\lama-main\\mio_compare.png")
 
             image_feed = rearrange(image_feed, 'h w c -> 1 c h w')
             result = self.model(image_feed)[0]
