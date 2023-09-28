@@ -10,7 +10,7 @@ The best results are given on landscapes, good results can still be achieved in 
 
 2) Manual Installation: clone this repo inside the custom_nodes folder
 ## A LaMa prerocessor for ComfyUi
-This is a simple workflow example. You can use it downloading workflows/workflow_lama.json and then dropping it a ComfyUI tab
+This is a simple workflow example.To use this, download workflows/workflow_lama.json and then drop it in a ComfyUI tab
 ![workflow](https://github.com/mlinmg/ComfyUI-LaMA-Preprocessor/assets/121761685/098f40d6-307c-4ad7-b0c0-5f40ea2e777f)
 
 ---
