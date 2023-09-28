@@ -1,4 +1,4 @@
 pytorch_lightning
 pandas
 kornia
-basicr
+basicsr
