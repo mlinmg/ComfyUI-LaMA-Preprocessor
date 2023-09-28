@@ -6,10 +6,9 @@ The best results are given on landscapes, not so much in drawings/animation.
 
 ## Installation
 
-To install this node clone this repo inside the custom_nodes folder and then install the packages inside the requirements.txt file by using the comand: 
-> pip install -r requirements.txt
-> 
-while inside the file folder
+1) Manager installation: be sure to have [ComfyUi Manager](https://github.com/ltdrdata/ComfyUI-Manager) installed, then just search for lama preprocessor  
+
+2) Manual Installation: clone this repo inside the custom_nodes folder
 ## A LaMa prerocessor for ComfyUi
 This is a simple workflow example. You can use it downloading workflows/workflow_lama.json and then dropping it a ComfyUI tab
 ![workflow](https://github.com/mlinmg/ComfyUI-LaMA-Preprocessor/assets/121761685/098f40d6-307c-4ad7-b0c0-5f40ea2e777f)
