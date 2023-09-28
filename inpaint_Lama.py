@@ -243,6 +243,7 @@ class VAEWrapper:
     def __init__(self, vae_instance):
         super().__init__()  # o qualsiasi altro argomento necessario per il costruttore di VAE
         self.vae = vae_instance
+        self.scale_factor=0.18215
 
     def to(self, where=None):
         if isinstance(where, torch.device):
@@ -262,7 +263,7 @@ class VAEWrapper:
             z = encoder_posterior
         else:
             raise NotImplementedError(f"encoder_posterior of type '{type(encoder_posterior)}' not yet implemented")
-        return self.vae.scale_factor * z
+        return self.scale_factor * z
 
     @torch.no_grad()
     def encode_first_stage_(self, x):
