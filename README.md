@@ -35,6 +35,7 @@ You can find the processor in image/preprocessors
 Everyone is invited to contribute, to do so you can just make a pull request
 
 If you would like to help to the development of this repo there are some missing features that still need to be implemented:
+- [ ] An unusual behavior is observed when providing an empty prompt to the drawing/cartoon inpainting system. Interestingly, the results appear to be significantly better when the two conditionings are prompted with "positive" and "negative" respectively. This warrants further investigation.
 - [ ] This workflow exibits some image darkening/color shifting, this should be further investigated in order to fix it
 - [ ] More consistent results. One of the problem might be in [this function](https://github.com/mlinmg/ComfyUI-LaMA-Preprocessor/blob/main/inpaint_Lama.py#L179) it seems that sometimes the image does not match the mask and if you pass this image to the LaMa model it make a noisy greyish mess
 - [ ] [soft injection](https://github.com/Mikubill/sd-webui-controlnet/blob/7a4805c8ea3256a0eab3512280bd4f84ca0c8182/scripts/hook.py#L620), since I cannot understand how to set different weights inside the sampling steps in comfyUI. At the moment the control seems too high all around, and this cause artifacts in more complex in/outpaint
