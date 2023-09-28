@@ -2,7 +2,7 @@
 
 This preprocessor finally enable users to generate coherent inpaint and outpaint **prompt-free**
 
-The best results are given on landscapes, good results can still be achieved in drawings by lowering the controlnet end percentuage to 0.7-0.8
+The best results are given on landscapes, good results can still be achieved in drawings by lowering the controlnet end percentage to 0.7-0.8
 
 ## Installation
 
