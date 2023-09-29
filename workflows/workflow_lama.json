@@ -1,6 +1,6 @@
 {
   "last_node_id": 133,
-  "last_link_id": 285,
+  "last_link_id": 286,
   "nodes": [
     {
       "id": 4,
@@ -233,7 +233,7 @@
         "1": 76
       },
       "flags": {},
-      "order": 9,
+      "order": 8,
       "mode": 0,
       "inputs": [
         {
@@ -271,7 +271,7 @@
         "1": 76
       },
       "flags": {},
-      "order": 10,
+      "order": 9,
       "mode": 0,
       "inputs": [
         {
@@ -420,156 +420,6 @@
       }
     },
     {
-      "id": 129,
-      "type": "lamaPreprocessor",
-      "pos": [
-        -240,
-        627
-      ],
-      "size": {
-        "0": 418.5,
-        "1": 98
-      },
-      "flags": {},
-      "order": 12,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "pixels",
-          "type": "IMAGE",
-          "link": 271
-        },
-        {
-          "name": "mask",
-          "type": "MASK",
-          "link": 272
-        },
-        {
-          "name": "vae",
-          "type": "VAE",
-          "link": 273
-        }
-      ],
-      "outputs": [
-        {
-          "name": "LaMa Preprocessed Image",
-          "type": "IMAGE",
-          "links": [
-            276
-          ],
-          "shape": 3,
-          "slot_index": 0
-        },
-        {
-          "name": "LaMa Preprocessed Latent",
-          "type": "LATENT",
-          "links": [
-            275
-          ],
-          "shape": 3,
-          "slot_index": 1
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "lamaPreprocessor"
-      },
-      "widgets_values": [
-        "outpainting"
-      ]
-    },
-    {
-      "id": 18,
-      "type": "ImagePadForOutpaint",
-      "pos": [
-        -856,
-        818
-      ],
-      "size": {
-        "0": 315,
-        "1": 174
-      },
-      "flags": {},
-      "order": 8,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "image",
-          "type": "IMAGE",
-          "link": 257
-        }
-      ],
-      "outputs": [
-        {
-          "name": "IMAGE",
-          "type": "IMAGE",
-          "links": [
-            271
-          ],
-          "shape": 3,
-          "slot_index": 0
-        },
-        {
-          "name": "MASK",
-          "type": "MASK",
-          "links": [
-            272
-          ],
-          "shape": 3,
-          "slot_index": 1
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "ImagePadForOutpaint"
-      },
-      "widgets_values": [
-        512,
-        0,
-        512,
-        0,
-        0
-      ]
-    },
-    {
-      "id": 10,
-      "type": "LoadImage",
-      "pos": [
-        -495,
-        771
-      ],
-      "size": [
-        416.19319570010884,
-        405.8508404613276
-      ],
-      "flags": {},
-      "order": 3,
-      "mode": 0,
-      "outputs": [
-        {
-          "name": "IMAGE",
-          "type": "IMAGE",
-          "links": [
-            257
-          ],
-          "shape": 3,
-          "slot_index": 0
-        },
-        {
-          "name": "MASK",
-          "type": "MASK",
-          "links": [],
-          "shape": 3,
-          "slot_index": 1
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "LoadImage"
-      },
-      "widgets_values": [
-        "imgnonlack (1).png",
-        "image"
-      ]
-    },
-    {
       "id": 117,
       "type": "RepeatLatentBatch",
       "pos": [
@@ -581,7 +431,7 @@
         "1": 58
       },
       "flags": {},
-      "order": 15,
+      "order": 13,
       "mode": 0,
       "inputs": [
         {
@@ -620,7 +470,7 @@
         26
       ],
       "flags": {},
-      "order": 13,
+      "order": 12,
       "mode": 0,
       "inputs": [
         {
@@ -656,7 +506,7 @@
         "1": 262
       },
       "flags": {},
-      "order": 16,
+      "order": 15,
       "mode": 0,
       "inputs": [
         {
@@ -716,7 +566,7 @@
         "1": 46
       },
       "flags": {},
-      "order": 18,
+      "order": 17,
       "mode": 0,
       "inputs": [
         {
@@ -756,7 +606,7 @@
         "1": 368.03607177734375
       },
       "flags": {},
-      "order": 19,
+      "order": 18,
       "mode": 0,
       "inputs": [
         {
@@ -782,7 +632,7 @@
         26
       ],
       "flags": {},
-      "order": 17,
+      "order": 16,
       "mode": 0,
       "inputs": [
         {
@@ -805,6 +655,105 @@
         "showOutputText": false,
         "horizontal": false
       }
+    },
+    {
+      "id": 129,
+      "type": "lamaPreprocessor",
+      "pos": [
+        -240,
+        627
+      ],
+      "size": {
+        "0": 418.5,
+        "1": 122
+      },
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "pixels",
+          "type": "IMAGE",
+          "link": 286
+        },
+        {
+          "name": "mask",
+          "type": "MASK",
+          "link": null
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 273
+        }
+      ],
+      "outputs": [
+        {
+          "name": "LaMa Preprocessed Image",
+          "type": "IMAGE",
+          "links": [
+            276
+          ],
+          "shape": 3,
+          "slot_index": 0
+        },
+        {
+          "name": "LaMa Preprocessed Latent",
+          "type": "LATENT",
+          "links": [
+            275
+          ],
+          "shape": 3,
+          "slot_index": 1
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "lamaPreprocessor"
+      },
+      "widgets_values": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": 10,
+      "type": "LoadImage",
+      "pos": [
+        -854,
+        826
+      ],
+      "size": {
+        "0": 416.1932067871094,
+        "1": 405.850830078125
+      },
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            286
+          ],
+          "shape": 3,
+          "slot_index": 0
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": [],
+          "shape": 3,
+          "slot_index": 1
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "imgnonlack (1).png",
+        "image"
+      ]
     }
   ],
   "links": [
@@ -897,14 +846,6 @@
       "*"
     ],
     [
-      257,
-      10,
-      0,
-      18,
-      0,
-      "IMAGE"
-    ],
-    [
       259,
       77,
       0,
@@ -927,22 +868,6 @@
       76,
       1,
       "CONTROL_NET"
-    ],
-    [
-      271,
-      18,
-      0,
-      129,
-      0,
-      "IMAGE"
-    ],
-    [
-      272,
-      18,
-      1,
-      129,
-      1,
-      "MASK"
     ],
     [
       273,
@@ -999,6 +924,14 @@
       131,
       0,
       "*"
+    ],
+    [
+      286,
+      10,
+      0,
+      129,
+      0,
+      "IMAGE"
     ]
   ],
   "groups": [],
