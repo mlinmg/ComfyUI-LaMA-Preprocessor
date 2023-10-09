@@ -26,7 +26,7 @@ font_path = os.path.join(my_dir, 'arial.ttf')
 # Append comfy_dir to sys.path & import files
 sys.path.append(comfy_dir)
 from nodes import LatentUpscaleBy, KSampler, KSamplerAdvanced, VAEDecode, VAEDecodeTiled, VAEEncode, VAEEncodeTiled, \
-    ImageScaleBy, CLIPSetLastLayer, CLIPTextEncode, ControlNetLoader, ControlNetApply, ControlNetApplyAdvanced, SetLatentNoiseMask
+    ImageScaleBy, CLIPSetLastLayer, CLIPTextEncode, ControlNetLoader, ControlNetApply, ControlNetApplyAdvanced, SetLatentNoiseMask, LoadImageMask
 from comfy_extras.nodes_clip_sdxl import CLIPTextEncodeSDXL, CLIPTextEncodeSDXLRefiner
 import comfy.samplers
 import comfy.sd
@@ -196,12 +196,27 @@ def apply_border_noise(detected_map, outp, mask, h, w):
         high_quality_border_color = np.median(border_pixels, axis=0).astype(detected_map.dtype)
         # create the background with the same color
         high_quality_background = np.tile(high_quality_border_color[None, None], [safeint(h), safeint(w), 1])
-    else:
+        detected_map = high_quality_resize(detected_map, (safeint(old_w * k), safeint(old_h * k)))
+        img_rgba = np.zeros((high_quality_background.shape[0], high_quality_background.shape[1], 4), dtype=np.float32)
+        img_rgba[:, :, 0:3] = high_quality_background
+        img_rgba[:, :, 3] = 255  # create a 4 channel image with the alpha channel set to 1
+        img_rgba_map = np.zeros((detected_map.shape[0], detected_map.shape[1], 4), dtype=np.float32)
+        img_rgba_map[:, :, 0:3] = detected_map
+        img_rgba_map[:, :, 3] = 0
+        detected_map = img_rgba_map
+        high_quality_background = img_rgba
+        new_h, new_w, _ = detected_map.shape
+        pad_h = max(0, (h - new_h) // 2)
+        pad_w = max(0, (w - new_w) // 2)
+        high_quality_background[pad_h:pad_h + new_h, pad_w:pad_w + new_w] = detected_map
+        detected_map = high_quality_background
+        detected_map = safe_numpy(detected_map)
+    else: #TODO: make sure that everything would work with inpaint
             # find the holes in the mask( where is equal to white)
             mask = mask.max(axis=2) > 254  # TODO: adapt this
             labeled, num_features = ndimage.label(mask)
             high_quality_background = np.zeros(
-                (h, w, 3))  # Make an empty image
+                (safeint(old_h), safeint(old_w), 3))  # Make an empty image
             for i in range(1, num_features + 1):
                 specific_mask = labeled == i
 
@@ -218,23 +233,23 @@ def apply_border_noise(detected_map, outp, mask, h, w):
 
                 # fill the hole with its specific filling color
                 high_quality_background[specific_mask] = high_quality_border_color
+            assert high_quality_background.shape == detected_map.shape, "The images must have the same shape"
 
-    # ensure that the background is 3 channels and has the correct size
-    detected_map = high_quality_resize(detected_map, (safeint(old_w * k), safeint(old_h * k)))
-    img_rgba = np.zeros((high_quality_background.shape[0], high_quality_background.shape[1], 4), dtype=np.float32)
-    img_rgba[:, :, 0:3] = high_quality_background
-    img_rgba[:, :, 3] = 255 # create a 4 channel image with the alpha channel set to 1
-    img_rgba_map = np.zeros((detected_map.shape[0], detected_map.shape[1], 4), dtype=np.float32)
-    img_rgba_map[:, :, 0:3] = detected_map
-    img_rgba_map[:, :, 3] = 0
-    detected_map = img_rgba_map
-    high_quality_background = img_rgba
-    new_h, new_w, _ = detected_map.shape
-    pad_h = max(0, (h - new_h) // 2)
-    pad_w = max(0, (w - new_w) // 2)
-    high_quality_background[pad_h:pad_h + new_h, pad_w:pad_w + new_w] = detected_map
-    detected_map = high_quality_background
-    detected_map = safe_numpy(detected_map)
+            # Create an empty rgba image
+            result = np.zeros((high_quality_background.shape[0], high_quality_background.shape[1], 4), dtype=np.float32)
+
+            # compy the bg in the empty image
+            result[:, :, 0:3] = high_quality_background
+
+            # set alpha channel to maks
+            result[mask, 3] = 255.0
+            result[~mask, 3] = 0.0
+
+            #overlay detect map and high quality background
+            alpha_channel = (1-result[:, :, 3] / 255.0)
+            for i in range(3):  # RGB channels
+                result[:, :, i] = (1 - alpha_channel) * result[:, :, i] + alpha_channel * detected_map[:, :, i]
+            detected_map = result
     return get_pytorch_control(detected_map), detected_map
 
 from ldm.modules.distributions.distributions import DiagonalGaussianDistribution
@@ -323,7 +338,8 @@ class lamaPreprocessor:
             #mask[0:vertical_expansion,0:horizontal_expansion]=1
         if mask is None:
             raise LaMaError()
-
+        if len(mask.shape)>3:
+            mask = mask[0]
         pixels = rearrange(pixels, '1 h w c -> h w c')
         pixels = pixels.clone()
         pixels = (pixels[:,:,:3].numpy()*255).astype(np.uint8)
@@ -345,46 +361,71 @@ class lamaPreprocessor:
 
         h = ((mask.shape[0]) // 8) * 8
         w = ((mask.shape[1]) // 8) * 8
-        if img_non_black.shape[0] != mask.shape[0]:
-            vertical_expansion = True
-        if img_non_black.shape[1] != mask.shape[1]:
-            horizontal_expansion = True
-        if horizontal_expansion:
-            if vertical_expansion:
-                mask_horizontal = mask[:, x_min:x_max + 1]
-                _, img = apply_border_noise(img_non_black, 'outpainting', mask_horizontal, mask_horizontal.shape[0], mask_horizontal.shape[1])
-            else:
-                _, img = apply_border_noise(img_non_black, 'outpainting', mask, h, w)
-            H, W, C = img.shape
-            raw_mask = img[:, :, 3:4]  # test
-            res = 256  # Always use 256 since lama is trained on 256
-            image_res, remove_pad = resize_image_with_pad(img, res, skip_hwc3=True)
-            if model_lama is None:
-                model_lama = LamaInpainting()
-            # apply model lama
-            try:
-                prd_color = model_lama(image_res)
-                # model_lama.unload_model()
-            except Exception as e:
-                print(e)
-                raise e
-            prd_color = remove_pad(prd_color)
-            prd_color = cv2.resize(prd_color, (W, H))
-            mask_alpha = raw_mask > 0
-            # add alpha channel to the image
-            final_img_with_alpha = np.zeros((H, W, 4), dtype=np.float32)
-            final_img_with_alpha[:, :, 3] = np.where(mask_alpha.squeeze(), 255, 0)
-            final_img_with_alpha[:, :, 0:3] = np.where(mask_alpha, prd_color, img[:, :, 0:3])
-            img_non_black = final_img_with_alpha
-        if vertical_expansion:
+        if img_non_black.shape[0] != pixels.shape[0]:
+            if img_non_black.shape[0] != mask.shape[0]:
+                vertical_expansion = True
+            if img_non_black.shape[1] != mask.shape[1]:
+                horizontal_expansion = True
             if horizontal_expansion:
-                mask_horizontal = mask
-                _, img = apply_border_noise(img_non_black, 'outpainting', mask_horizontal, mask_horizontal.shape[0], mask_horizontal.shape[1])
-            else:
-                _, img = apply_border_noise(img_non_black, 'outpainting', mask, h, w)
+                if vertical_expansion:
+                    mask_horizontal = mask[:, x_min:x_max + 1]
+                    _, img = apply_border_noise(img_non_black, 'outpainting', mask_horizontal, mask_horizontal.shape[0], mask_horizontal.shape[1])
+                else:
+                    _, img = apply_border_noise(img_non_black, 'outpainting', mask, h, w)
+                H, W, C = img.shape
+                raw_mask = img[:, :, 3:4]  # test
+                res = 256  # Always use 256 since lama is trained on 256
+                image_res, remove_pad = resize_image_with_pad(img, res, skip_hwc3=True)
+                if model_lama is None:
+                    model_lama = LamaInpainting()
+                # apply model lama
+                try:
+                    prd_color = model_lama(image_res)
+                    # model_lama.unload_model()
+                except Exception as e:
+                    print(e)
+                    raise e
+                prd_color = remove_pad(prd_color)
+                prd_color = cv2.resize(prd_color, (W, H))
+                mask_alpha = raw_mask > 0
+                # add alpha channel to the image
+                final_img_with_alpha = np.zeros((H, W, 4), dtype=np.float32)
+                final_img_with_alpha[:, :, 3] = np.where(mask_alpha.squeeze(), 255, 0)
+                final_img_with_alpha[:, :, 0:3] = np.where(mask_alpha, prd_color, img[:, :, 0:3])
+                img_non_black = final_img_with_alpha
+            if vertical_expansion:
+                if horizontal_expansion:
+                    mask_horizontal = mask
+                    _, img = apply_border_noise(img_non_black, 'outpainting', mask_horizontal, mask_horizontal.shape[0], mask_horizontal.shape[1])
+                else:
+                    _, img = apply_border_noise(img_non_black, 'outpainting', mask, h, w)
+                H, W, C = img.shape
+
+                raw_mask = mask*255#img[:, :, 3:4]  # test
+                res = 256  # Always use 256 since lama is trained on 256
+                image_res, remove_pad = resize_image_with_pad(img, res, skip_hwc3=True)
+
+                if model_lama is None:
+                    model_lama = LamaInpainting()
+                # apply model lama
+                try:
+                    prd_color = model_lama(image_res)
+                    # model_lama.unload_model()
+                except Exception as e:
+                    print(e)
+                    raise e
+                prd_color = remove_pad(prd_color)
+                prd_color = cv2.resize(prd_color, (W, H))
+                mask_alpha = raw_mask > 0
+                # add alpha channel to the image
+                final_img_with_alpha = np.zeros((H, W, 4), dtype=np.float32)
+                final_img_with_alpha[:, :, 3] = np.where(mask_alpha.squeeze(), 255, 0)
+                final_img_with_alpha[:, :, 0:3] = np.where(mask_alpha, prd_color, img[:, :, 0:3])
+        else:
+            _, img = apply_border_noise(img_non_black, 'inpainting', mask, h, w)
             H, W, C = img.shape
 
-            raw_mask = mask*255#img[:, :, 3:4]  # test
+            raw_mask = mask * 255  # img[:, :, 3:4]  # test
             res = 256  # Always use 256 since lama is trained on 256
             image_res, remove_pad = resize_image_with_pad(img, res, skip_hwc3=True)
 
@@ -408,11 +449,14 @@ class lamaPreprocessor:
         final_img = get_pytorch_control(final_img_with_alpha)
         final_img = rearrange(final_img, ('1 c h w -> 1 h w c'))
         encoded_image = self._encode_image(vae, final_img)
-        encoded_image_dict = {'samples':encoded_image.cpu()}
+        encoded_image_dict = {'samples': encoded_image.cpu()}
+
+        encoded_image_dict = SetLatentNoiseMask().set_mask(encoded_image_dict, torch.from_numpy(np.transpose(np.ones_like(mask), (2,0,1))))[0]
+
         c = final_img[:, :, :, 0:3]
         m = final_img[:, :, :, 3:4]
         m = (m > 0.5).float()
-        image = c * (1 - m) - m # create hint image
+        image = c * (1 - m) - m
         return (image, encoded_image_dict)
 
     RETURN_TYPES = ("IMAGE", "LATENT")
