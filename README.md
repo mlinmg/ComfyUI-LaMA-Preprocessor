@@ -1,5 +1,7 @@
 # LaMa Preprocessor (WIP)
 
+Currenly only supports NVIDIA
+
 This preprocessor finally enable users to generate coherent inpaint and outpaint **prompt-free**
 
 For inpainting tasks, it's recommended to use the 'outpaint' function. Although the 'inpaint' function is still in the development phase, the results from the 'outpaint' function remain quite satisfactory.
