@@ -11,17 +11,12 @@ assignees: ''
 A clear and concise description of what the bug is.
 
 **To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+Complete Workflow:
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+Input Image:
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+**Console Traceback**
+The complete console error traceback
 
 
 **Additional context**
