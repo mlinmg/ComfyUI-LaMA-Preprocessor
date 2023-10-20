@@ -14,7 +14,6 @@ from .saicinpainting.training.trainers import load_checkpoint
 # Aggiungi il percorso alla variabile d'ambiente PYTHONPATH
 sys.path.append(percorso_radice_progetto)
 
-from saicinpainting.training.trainers import load_checkpoint
 
 devices = 'cuda' if torch.cuda.is_available() else 'cpu'
 models_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models','lama')
