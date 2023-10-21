@@ -29,7 +29,7 @@ You can find the processor in image/preprocessors
 
 ## Contributing
 
-Everyone is invited to contribute, to do so you can just make a pull request
+Everyone is invited to contribute, my work schedule seriosly limit the time I can spend improving this project is any help is welcome.
 
 If you would like to help to the development of this repo there are some missing features that still need to be implemented:
 
