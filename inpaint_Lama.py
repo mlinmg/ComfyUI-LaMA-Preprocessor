@@ -272,9 +272,9 @@ class VAEWrapper:
 
 
     def get_first_stage_encoding_(self, encoder_posterior):
-        if type(encoder_posterior).__name__ == "DiagonalGaussianDistribution":#had to use a string comparison since theere was a problem with isinstance
+        if isinstance(encoder_posterior, DiagonalGaussianDistribution):
             z = encoder_posterior.sample()
-        elif type(encoder_posterior).__name__ == "torch.Tensor":
+        elif isinstance(encoder_posterior, torch.Tensor):
             z = encoder_posterior
         else:
             raise NotImplementedError(f"encoder_posterior of type '{type(encoder_posterior)}' not yet implemented")
@@ -315,7 +315,7 @@ class lamaPreprocessor:
         image_without_alpha = image.to(wrapper.vae.vae_dtype) * 2.0 - 1.0
         image = rearrange(image_without_alpha, '1 w h c -> 1 c w h')
         encoded_image = wrapper.encode_first_stage_(image)
-        if torch.all(torch.isnan(encoded_image.mean)):
+        if torch.all(torch.isnan(encoded_image.mean())):
             print("All values produced are NANs, automatically upcasting dtype to float32")
             wrapper.to(torch.float32)
             encoded_image = wrapper.encode_first_stage_(image)
