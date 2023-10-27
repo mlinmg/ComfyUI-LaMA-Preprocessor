@@ -361,7 +361,7 @@ class lamaPreprocessor:
 
         h = ((mask.shape[0]) // 8) * 8
         w = ((mask.shape[1]) // 8) * 8
-        if img_non_black.shape[0] != pixels.shape[0]:
+        if img_non_black.shape[0] != pixels.shape[0] or img_non_black.shape[1] != pixels.shape[1]:
             if img_non_black.shape[0] != mask.shape[0]:
                 vertical_expansion = True
             if img_non_black.shape[1] != mask.shape[1]:
