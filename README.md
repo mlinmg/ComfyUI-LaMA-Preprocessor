@@ -22,14 +22,21 @@ The best results are given on landscapes, good results can still be achieved in 
 ---
 
 This are some non cherry picked results, all obtained starting from this image
+![startingImage](https://github.com/mlinmg/ComfyUI-LaMA-Preprocessor/assets/121761685/18b937d6-bcda-4606-a3b0-b24af55d27dd)
+
 
 ---
+
+![ComfyUI_01581_](https://github.com/mlinmg/ComfyUI-LaMA-Preprocessor/assets/121761685/3adbc1f8-bb3e-4ae5-b31b-d7fb8624f0ae)
+![ComfyUI_01580_](https://github.com/mlinmg/ComfyUI-LaMA-Preprocessor/assets/121761685/77f73d96-2612-431d-bd3c-7e6f4c2503c0)
+![ComfyUI_01579_](https://github.com/mlinmg/ComfyUI-LaMA-Preprocessor/assets/121761685/5715229b-6b6e-4f2e-917c-97b09758c805)
+![ComfyUI_01578_](https://github.com/mlinmg/ComfyUI-LaMA-Preprocessor/assets/121761685/dbe1a705-7574-4b2e-a2c6-d06708a38261)
 
 You can find the processor in image/preprocessors
 
 ## Contributing
 
-Everyone is invited to contribute, my work schedule seriosly limit the time I can spend improving this project is any help is welcome.
+Everyone is invited to contribute, my school/work schedule seriously limit the time I can spend improving this project is any help is welcome.
 
 If you would like to help to the development of this repo there are some missing features that still need to be implemented:
 
