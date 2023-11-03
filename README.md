@@ -10,7 +10,7 @@ The best results are given on landscapes, good results can still be achieved in 
 
 ## Installation
 
-1. Manager installation: be sure to have [ComfyUi Manager](https://github.com/ltdrdata/ComfyUI-Manager) installed, then just search for lama preprocessor
+1. **Manager installation (suggested)**: be sure to have [ComfyUi Manager](https://github.com/ltdrdata/ComfyUI-Manager) installed, then just search for lama preprocessor
   
 2. Manual Installation: clone this repo inside the custom_nodes folder
   
