@@ -2,6 +2,7 @@ import os
 from annotator.annotator_path import models_path
 from modules import devices
 from annotator.uniformer.inference import init_segmentor, inference_segmentor, show_result_pyplot
+import urllib.request
 
 try:
     from mmseg.core.evaluation import get_palette
@@ -18,7 +19,10 @@ def unload_uniformer_model():
     global model
     if model is not None:
         model = model.cpu()
-
+def _load_file_from_url(model_path: str, model_dir: str) -> None:
+        os.makedirs(os.path.dirname(model_dir), exist_ok=True)
+        urllib.request.urlretrieve(model_path, os.path.join(model_dir, model_path.split("/")[-1]))
+    
 def apply_uniformer(img):
     global model
     if model is None:
@@ -27,8 +31,7 @@ def apply_uniformer(img):
         if os.path.exists(old_modelpath):
             modelpath = old_modelpath  
         elif not os.path.exists(modelpath):
-            from basicsr.utils.download_util import load_file_from_url
-            load_file_from_url(checkpoint_file, model_dir=modeldir)
+            _load_file_from_url(checkpoint_file, model_dir=modeldir)
             
         model = init_segmentor(config_file, modelpath, device=devices.get_device_for("controlnet"))
     model = model.to(devices.get_device_for("controlnet"))
