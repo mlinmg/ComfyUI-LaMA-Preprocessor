@@ -29,7 +29,7 @@ class LamaInpainting:
 
     
 
-    def _load_file_from_url(model_path: str, model_dir: str) -> None:
+    def _load_file_from_url(self, model_path: str, model_dir: str) -> None:
         os.makedirs(os.path.dirname(model_dir), exist_ok=True)
         urllib.request.urlretrieve(model_path, os.path.join(model_dir, model_path.split("/")[-1]))
     
@@ -37,7 +37,7 @@ class LamaInpainting:
         remote_model_path = "https://huggingface.co/lllyasviel/Annotators/resolve/main/ControlNetLama.pth"
         modelpath = os.path.join(self.model_dir, "ControlNetLama.pth")
         if not os.path.exists(modelpath):
-            _load_file_from_url(remote_model_path, model_dir=self.model_dir)
+            self._load_file_from_url(remote_model_path, model_dir=self.model_dir)
         config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.yaml')
         cfg = yaml.safe_load(open(config_path, 'rt'))
         cfg = OmegaConf.create(cfg)
