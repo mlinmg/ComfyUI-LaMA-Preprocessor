@@ -176,7 +176,7 @@ def high_quality_resize(x, size):
 
 safeint = lambda x: int(np.round(x))
 
-def apply_border_noise(detected_map, outp, mask, h, w,right=0, bottom=0):
+def apply_border_noise(detected_map, outp, mask, h, w, offset_x=0, offset_y=0):
     #keep only the first 3 channels
     detected_map = detected_map[:, :, 0:3].copy()
     detected_map = detected_map.astype(np.float32)
@@ -206,8 +206,8 @@ def apply_border_noise(detected_map, outp, mask, h, w,right=0, bottom=0):
         detected_map = img_rgba_map
         high_quality_background = img_rgba
         new_h, new_w, _ = detected_map.shape
-        pad_h = max(0, (h - new_h - bottom))
-        pad_w = max(0, (w - new_w - right))
+        pad_h = max(0, (h - new_h - offset_y))
+        pad_w = max(0, (w - new_w - offset_x))
         high_quality_background[pad_h:pad_h + new_h, pad_w:pad_w + new_w] = detected_map
         detected_map = high_quality_background
         detected_map = safe_numpy(detected_map)
