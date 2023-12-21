@@ -176,7 +176,7 @@ def high_quality_resize(x, size):
 
 safeint = lambda x: int(np.round(x))
 
-def apply_border_noise(detected_map, outp, mask, h, w):
+def apply_border_noise(detected_map, outp, mask, h, w,right=0, bottom=0):
     #keep only the first 3 channels
     detected_map = detected_map[:, :, 0:3].copy()
     detected_map = detected_map.astype(np.float32)
@@ -206,8 +206,8 @@ def apply_border_noise(detected_map, outp, mask, h, w):
         detected_map = img_rgba_map
         high_quality_background = img_rgba
         new_h, new_w, _ = detected_map.shape
-        pad_h = max(0, (h - new_h) // 2)
-        pad_w = max(0, (w - new_w) // 2)
+        pad_h = max(0, (h - new_h - bottom))
+        pad_w = max(0, (w - new_w - right))
         high_quality_background[pad_h:pad_h + new_h, pad_w:pad_w + new_w] = detected_map
         detected_map = high_quality_background
         detected_map = safe_numpy(detected_map)
@@ -301,8 +301,10 @@ class lamaPreprocessor:
         return {"required":
                     {"pixels": ("IMAGE", ),
                      "vae": ("VAE",),
-                     "horizontal_expansion":("INT", {"default": 0, "min": 0, "max": 4096, "step": 8}),
-                     "vertical_expansion": ("INT", {"default": 0, "min": 0, "max": 4096, "step": 8}),
+                     "left":("INT", {"default": 0, "min": 0, "max": 2048, "step": 8}),
+                     "right":("INT", {"default": 0, "min": 0, "max": 2048, "step": 8}),
+                     "top": ("INT", {"default": 0, "min": 0, "max": 2048, "step": 8}),
+                     "bottom": ("INT", {"default": 0, "min": 0, "max": 2048, "step": 8}),
                      },
                 "optional": {"mask": ("MASK",),}
 
@@ -322,18 +324,18 @@ class lamaPreprocessor:
         vae_output = wrapper.get_first_stage_encoding_(encoded_image)
         return vae_output
 
-    def preprocess(self, pixels:torch.Tensor,vae,mask=None,horizontal_expansion=0,vertical_expansion=0):
+    def preprocess(self, pixels:torch.Tensor,vae,mask=None,left=0,right=0,top=0,bottom=0):
         global model_lama
         if mask is not None:
             mask = (mask.numpy()*255).astype(np.float32)
             mask = np.expand_dims(mask, -1)
-        if (vertical_expansion!=0 or horizontal_expansion!=0) and mask is None:
+        if (top!=0 or left!=0 or right != 0 or bottom != 0) and mask is None:
             #create an expansion mask
-            mask = np.ones((pixels.shape[1]+vertical_expansion,pixels.shape[2]+horizontal_expansion,1),dtype=np.float32)
+            mask = np.ones((pixels.shape[1]+top+bottom,pixels.shape[2]+left+right,1),dtype=np.float32)
             #keep the image centered and add a padding with value 1 in the expansion dimenisons
-            mask[vertical_expansion//2:vertical_expansion//2+pixels.shape[1],horizontal_expansion//2:horizontal_expansion//2+pixels.shape[2]]=0
-            pixels_with_outpaint_mask = np.zeros((pixels.shape[1]+vertical_expansion,pixels.shape[2]+horizontal_expansion,4),dtype=np.float32)
-            pixels_with_outpaint_mask[vertical_expansion//2:vertical_expansion//2+pixels.shape[1],horizontal_expansion//2:horizontal_expansion//2+pixels.shape[2],0:3]=pixels
+            mask[top:top+pixels.shape[1],left:left+pixels.shape[2]]=0
+            pixels_with_outpaint_mask = np.zeros((pixels.shape[1]+top+bottom,pixels.shape[2]+left+right,4),dtype=np.float32)
+            pixels_with_outpaint_mask[top:top+pixels.shape[1],left:left+pixels.shape[2],0:3]=pixels
             pixels = torch.from_numpy(pixels_with_outpaint_mask[np.newaxis, :])
             #mask[0:vertical_expansion,0:horizontal_expansion]=1
         if mask is None:
@@ -369,9 +371,9 @@ class lamaPreprocessor:
             if horizontal_expansion:
                 if vertical_expansion:
                     mask_horizontal = mask[:, x_min:x_max + 1]
-                    _, img = apply_border_noise(img_non_black, 'outpainting', mask_horizontal, mask_horizontal.shape[0], mask_horizontal.shape[1])
+                    _, img = apply_border_noise(img_non_black, 'outpainting', mask_horizontal, mask_horizontal.shape[0], mask_horizontal.shape[1], right, bottom)
                 else:
-                    _, img = apply_border_noise(img_non_black, 'outpainting', mask, h, w)
+                    _, img = apply_border_noise(img_non_black, 'outpainting', mask, h, w, right, bottom)
                 H, W, C = img.shape
                 raw_mask = img[:, :, 3:4]  # test
                 res = 256  # Always use 256 since lama is trained on 256
@@ -396,12 +398,13 @@ class lamaPreprocessor:
             if vertical_expansion:
                 if horizontal_expansion:
                     mask_horizontal = mask
-                    _, img = apply_border_noise(img_non_black, 'outpainting', mask_horizontal, mask_horizontal.shape[0], mask_horizontal.shape[1])
+                    _, img = apply_border_noise(img_non_black, 'outpainting', mask_horizontal, mask_horizontal.shape[0], mask_horizontal.shape[1], right, bottom)
+                    raw_mask = mask*255
                 else:
-                    _, img = apply_border_noise(img_non_black, 'outpainting', mask, h, w)
+                    _, img = apply_border_noise(img_non_black, 'outpainting', mask, h, w, right, bottom)
+                    raw_mask = img[:, :, 3:4]  # test
                 H, W, C = img.shape
 
-                raw_mask = mask*255#img[:, :, 3:4]  # test
                 res = 256  # Always use 256 since lama is trained on 256
                 image_res, remove_pad = resize_image_with_pad(img, res, skip_hwc3=True)
 
