@@ -1,4 +1,5 @@
-# LaMa Preprocessor (WIP)
+# ⚠️⚠️⚠️ Due to lack of bandwidth this repo is going public in favor of actually mantained repos like [comfyui-inpaint-nodes](https://github.com/Acly/comfyui-inpaint-nodes) ⚠️⚠️⚠️
+# LaMa Preprocessor
 
 Currenly only supports NVIDIA
 
